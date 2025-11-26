@@ -1,0 +1,3 @@
+cowsay
+colorama
+prompt_toolkit

@@ -1,0 +1,14 @@
+# kitty.cow – eine Katze für cowsay
+
+$the_cow = <<'EOC';
+   $thoughts
+    $thoughts      /\_/\  
+     $thoughts    ( $eyes ) 
+      $thoughts   =(   )=  
+       $thoughts    )   (   //
+        $thoughts  (__ __)//
+EOC
+
+# Standard-Augen und Zunge
+$eyes = $eyes || "o.o";
+$tongue = $tongue || " ";

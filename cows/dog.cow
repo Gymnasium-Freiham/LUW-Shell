@@ -1,0 +1,12 @@
+$the_cow = <<'EOC';
+   $thoughts
+    $thoughts   /^ ^\ 
+     $thoughts  / $eyes \
+      $thoughts V\   /V
+       $thoughts  / - \
+        $thoughts (     )
+         $thoughts || || 
+EOC
+
+$eyes = $eyes || "0.0";
+$tongue = $tongue || "U";
