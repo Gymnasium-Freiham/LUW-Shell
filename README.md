@@ -26,3 +26,7 @@ Executes the following command with PowerShell
 `!cmd`
 
 Executes the following command with CMD
+
+`help`
+
+Views the usage of most commands
