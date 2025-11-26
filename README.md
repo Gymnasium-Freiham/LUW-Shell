@@ -30,3 +30,18 @@ Executes the following command with CMD
 `help`
 
 Views the usage of most commands
+
+Creating executables and scripts
+----------------------------------------------------------------------
+To create a script, just create a file script.latin (Or which other name you want) and then execute
+
+`<PathToThelatin.exe> --script <pathtoyourscript.latin>`
+or double click it in the file explorer. If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
+
+If you want to compile a script execute
+
+`<PathToThelatin.exe> --compile <pathtoyourscript.latin>`
+
+and then execute the compiled script with
+
+`<PathToThelatin.exe> --binary <pathtoyourscript.latin>` or double click it in the file explorer If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
