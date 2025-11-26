@@ -2,3 +2,5 @@ modules/__pycache__/
 venv/
 script.latin
 script.le
+installer.nsi
+LUW-Shell-Setup.exe
