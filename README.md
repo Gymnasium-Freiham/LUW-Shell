@@ -47,3 +47,11 @@ If you want to compile a script execute
 and then execute the compiled script with
 
 `<PathToThelatin.exe> --binary <pathtoyourscript.le>` or double click it in the file explorer If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
+
+Start arguments
+----------------------------------------
+`Optional Arguments`
+
+`--thread-count` 
+
+Sets the number of workers, e. g. `--thread-count 8`
