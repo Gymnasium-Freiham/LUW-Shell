@@ -1023,6 +1023,19 @@ def sudo(args: dict) -> str:
 	except Exception as e:
 		return f"sudo failed: {e}"
 
+def lupdate(args: dict) -> str:
+    # Pfad zur Konfigurationsdatei im User-Home
+    config_path = os.path.join(os.path.expanduser("~"), ".luw-config-path")
+
+    # Inhalt lesen (z.B. "C:/Users/Adam/LUW-Shell/app.py")
+    with open(config_path, "r", encoding="utf-8") as f:
+        app_path = f.read().strip()
+
+    # Elternordner extrahieren -> Installationsverzeichnis
+    INSTPATH = os.path.dirname(app_path)
+    os.system(f"{INSTPATH}/LUW-Shell-Update.exe")
+    return "Launched Update process. A new windows should open."
+
 # --- end new command implementations ---
 
 COMMANDS = {
@@ -1058,6 +1071,7 @@ COMMANDS = {
     "find": find,
     "cowsay": cowsay,
     "os-type": os_type,
+    "lupdate": lupdate
 }
 
 COMMANDS.update({
