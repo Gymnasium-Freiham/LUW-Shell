@@ -1035,7 +1035,7 @@ def lupdate(args: dict) -> str:
     # Elternordner extrahieren -> Installationsverzeichnis
     INSTPATH = os.path.dirname(app_path)
     os.system(f"{INSTPATH}/LUW-Shell-Update.exe")
-    return "Launched Update process. A new windows should open."
+    return "Launched Update process. A new window should open."
 
 # --- end new command implementations ---
 
