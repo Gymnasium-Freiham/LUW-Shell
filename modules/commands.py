@@ -781,10 +781,11 @@ def os_type(args: dict) -> str:
     Y = getattr(c, "YELLOW", "\033[33m")
     C = getattr(c, "LIGHT_GREEN", "\033[92m")
     B = getattr(c, "GREY", "\033[90m")
+    BLU = getattr(c, "BLUE", "\033[34m")   # neu
     RST = getattr(c, "RESET", "\033[0m")
 
     color_for_key = {
-        "windows": B,
+        "windows": BLU,   # hier statt B
         "macos": C,
         "ubuntu": Y,
         "tux": C,

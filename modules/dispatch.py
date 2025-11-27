@@ -325,6 +325,7 @@ def _run_builtin(command, args):
         "env": "env - List environment variables.",
         "set": "set VAR=VALUE - Set environment variable.",
         "get": "get VAR - Get environment variable.",
+        "lupdate": "lupdate - Update the shell"
     }
 
     # help: no args -> list commands and builtins; help <cmd> -> show docstring or builtin doc

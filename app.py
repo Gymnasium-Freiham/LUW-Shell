@@ -29,6 +29,42 @@ def write_config_path():
     else:
         pass
 
+def _resolve_input_path(p: str) -> str:
+    """
+    Try to resolve input path p in multiple locations:
+    - as given
+    - relative to cwd
+    - relative to this script's directory (app directory)
+    Returns absolute path or raises FileNotFoundError.
+    """
+    if os.path.isabs(p) and os.path.isfile(p):
+        return os.path.abspath(p)
+    # try as given (relative to cwd)
+    cand = os.path.abspath(p)
+    if os.path.isfile(cand):
+        return cand
+    # try relative to current working directory explicitly (redundant but explicit)
+    cand = os.path.join(os.getcwd(), p)
+    if os.path.isfile(cand):
+        return os.path.abspath(cand)
+    # try relative to the app directory (where this file resides)
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    cand = os.path.join(app_dir, p)
+    if os.path.isfile(cand):
+        return os.path.abspath(cand)
+    # try adding common extensions if missing
+    for ext in (".latin", ".py", ".txt"):
+        cand = os.path.abspath(p + ext)
+        if os.path.isfile(cand):
+            return cand
+        cand = os.path.join(os.getcwd(), p + ext)
+        if os.path.isfile(cand):
+            return os.path.abspath(cand)
+        cand = os.path.join(app_dir, p + ext)
+        if os.path.isfile(cand):
+            return os.path.abspath(cand)
+    raise FileNotFoundError(p)
+
 def compile_latin(script_path: str, out_path: str = None) -> str:
     """
     Produce a .le binary from a LUW script file.
@@ -39,9 +75,9 @@ def compile_latin(script_path: str, out_path: str = None) -> str:
       - gzip-compressed payload (utf-8 script text)
     Returns output path.
     """
-    script_abspath = os.path.abspath(script_path)
-    if not os.path.isfile(script_abspath):
-        raise FileNotFoundError(script_path)
+    # Resolve script_path robustly so users can pass relative names like "app.py"
+    script_abspath = _resolve_input_path(script_path)
+
     with open(script_abspath, "rb") as f:
         script_bytes = f.read()
 
@@ -95,24 +131,26 @@ def load_and_run_le(le_path: str, master):
             raise ValueError(f"Invalid payload (not gzip?) in {le_path}: {e}")
         script_text = script_bytes.decode("utf-8", errors="replace")
 
-    # If this is a python binary, run it by writing to a temporary file and executing with the interpreter.
+    # If this is a python binary, run it by writing to a temp .py and executing with the interpreter.
     if manifest.get("type") == "python":
-        tmp = None
+        # Save the payload next to the .le so relative resources/imports resolve
+        le_dir = os.path.dirname(os.path.abspath(le_path)) or "."
+        entry_name = manifest.get("entry") or (manifest.get("name") + ".py")
+        target_path = os.path.join(le_dir, entry_name)
+        # avoid clobbering an existing file: append timestamp suffix if needed
+        if os.path.exists(target_path):
+            base, ext = os.path.splitext(entry_name)
+            suffix = f"_le_run_{int(time.time())}"
+            target_path = os.path.join(le_dir, f"{base}{suffix}{ext or '.py'}")
         try:
-            tf = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode="wb")
-            tmp = tf.name
-            tf.write(script_bytes)
-            tf.flush()
-            tf.close()
-            # Run the temp python file and stream output to the current stdout/stderr
-            proc = subprocess.run([sys.executable, tmp], check=False, text=True, encoding="utf-8", errors="replace")
-            return proc.returncode == 0
-        finally:
-            try:
-                if tmp and os.path.exists(tmp):
-                    os.remove(tmp)
-            except Exception:
-                pass
+            with open(target_path, "wb") as tf:
+                tf.write(script_bytes)
+                tf.flush()
+            # Execute from the .le directory so relative paths work
+            rc = subprocess.run([sys.executable, target_path], check=False, text=True, encoding="utf-8", errors="replace", cwd=le_dir)
+            return rc.returncode == 0
+        except Exception as e:
+            raise RuntimeError(f"Failed to write/run python payload: {e}")
 
     # Execute same as --script for LUW scripts: iterate lines and dispatch
     for raw in script_text.splitlines():
