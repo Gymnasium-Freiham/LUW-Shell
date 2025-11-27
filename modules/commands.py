@@ -477,6 +477,24 @@ _ANIMALS = {
     """,
 }
 
+# --- NEW: load .cow files from project 'cows' directory and register by filename (kitty.cow -> --animal kitty)
+_COW_TEMPLATES = {}
+try:
+    _PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))  # parent of modules/
+    _COW_DIR = os.path.join(_PROJECT_ROOT, "cows")
+    if os.path.isdir(_COW_DIR):
+        for _fn in sorted(os.listdir(_COW_DIR)):
+            if _fn.lower().endswith(".cow"):
+                _name = os.path.splitext(_fn)[0].lower()
+                try:
+                    with open(os.path.join(_COW_DIR, _fn), "r", encoding="utf-8", errors="replace") as _f:
+                        _COW_TEMPLATES[_name] = _f.read()
+                except Exception:
+                    # ignore unreadable cow files
+                    pass
+except Exception:
+    _COW_TEMPLATES = {}
+
 # prefer external cowsay if available; be robust to functions that print instead of returning
 try:
     import cowsay as _cowsay_mod  # optional external dependency
@@ -526,18 +544,19 @@ def cowsay(args: dict) -> str:
     else:
         colour = None
 
-    # --- NEW: .cow file support ---
+    # --- NEW: prefer explicit --cowfile, else check loaded cow templates by animal name ---
     cowfile = args.get("cowfile")
     cowfile_content = None
-    cowfile_name = None
     if cowfile:
         try:
             with open(cowfile, "r", encoding="utf-8", errors="replace") as f:
                 cowfile_content = f.read()
-            # cowsay lib expects a name or a function; we use the file path as a unique name
-            cowfile_name = os.path.abspath(cowfile)
         except Exception as e:
             return f"cowsay failed to read cowfile: {e}"
+    else:
+        # if user requested an animal that matches a .cow filename, use that template
+        if animal and animal in _COW_TEMPLATES:
+            cowfile_content = _COW_TEMPLATES[animal]
 
     # RGB color support: accept --rgb "R G B" or --rgb R and the next two numeric tokens at start of message
     rgb_tuple = None
@@ -1106,17 +1125,21 @@ def _parse_dot_cow(content: str):
     defaults: dict with optional 'eyes' and 'tongue'
     """
     try:
+        # Remove comment lines (start with # or ##)
+        lines = content.splitlines()
+        non_comment = [l for l in lines if not l.strip().startswith("#")]
+        content_nc = "\n".join(non_comment)
         # find here-doc block assigned to $the_cow
-        m = re.search(r"\$the_cow\s*=\s*<<['\"]EOC['\"];\s*(.*?)\nEOC", content, re.DOTALL | re.M)
+        m = re.search(r"\$the_cow\s*=\s*<<['\"]?EOC['\"]?;\s*(.*?)\nEOC", content_nc, re.DOTALL | re.M)
         if not m:
             return None, {}
         template = m.group(1).rstrip("\n")
         defaults = {}
         # find default eyes/tongue patterns like: $eyes = $eyes || "o.o";
-        m_eyes = re.search(r"\$eyes\s*=\s*\$eyes\s*\|\|\s*['\"]([^'\"]+)['\"]", content)
+        m_eyes = re.search(r"\$eyes\s*=\s*\$eyes\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
         if m_eyes:
             defaults["eyes"] = m_eyes.group(1)
-        m_tongue = re.search(r"\$tongue\s*=\s*\$tongue\s*\|\|\s*['\"]([^'\"]+)['\"]", content)
+        m_tongue = re.search(r"\$tongue\s*=\s*\$tongue\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
         if m_tongue:
             defaults["tongue"] = m_tongue.group(1)
         return template, defaults
