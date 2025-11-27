@@ -688,9 +688,9 @@ def _detect_linux_distro():
 # Logos (small, single-character/shape recognizable)
 _LOGOS = {
     "windows": [
-        " ███ ███    ",
-        "            ",
-        " ███ ███    ",
+        " ███ ███      ",
+        "              ",
+        " ███ ███      ",
     ],
     "macos": [
         "   .:;:.",
