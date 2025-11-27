@@ -39,18 +39,18 @@ Creating executables and scripts
 ----------------------------------------------------------------------
 To create a script, just create a file script.latin (Or which other name you want) and then execute
 
-`<PathToThelatin.exe> --script <pathtoyourscript.latin>`
+`latin --script <pathtoyourscript.latin>`
 or double click it in the file explorer. If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
 
 If you want to compile a script execute
 
-`<PathToThelatin.exe> --compile <pathtoyourscript>`
+`latin --compile <pathtoyourscript>`
 
 (The compiler only accepts .latin and .py files and will output a .le file in the directory it ran from)
 
 and then execute the compiled script with
 
-`<PathToThelatin.exe> --binary <pathtoyourscript.le>` or double click it in the file explorer If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
+`latin --binary <pathtoyourscript.le>` or double click it in the file explorer If you chose the file explorer, mind that you won't see the output because the terminal automatically closes after it finishes
 
 Start arguments
 ----------------------------------------
