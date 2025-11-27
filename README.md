@@ -31,6 +31,10 @@ Executes the following command with CMD
 
 Views the usage of most commands
 
+`lupdate`
+
+Updates the shell to the latest version
+
 Creating executables and scripts
 ----------------------------------------------------------------------
 To create a script, just create a file script.latin (Or which other name you want) and then execute
