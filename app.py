@@ -189,57 +189,57 @@ _have_prompt_toolkit = False
 
 # --- NEW: helpers for command-specific flag completion ---
 COMMON_FLAGS = {
-    "cd": ["--mkdir", "--create", "--p"],
-    "cowsay": ["--animal", "--colour", "--color", "-a"],
-    "apt": ["install", "remove", "search", "--force"],
-    "head": ["--n"],
-    "tail": ["--n"],
-    "grep": ["--pattern", "--file", "-n", "-i"],
-    "find": ["--name", "--path"],
-    "json": ["--file"],
-    "wc": ["--file", "--bytes"],
-    "set": [],
-    "get": [],
-    "ls": ["--all", "--long", "--path"],
-    "echo": [],
-    "reverse": [],
-    "upper": [],
-    "pwd": [],
-    "sudo": [],
-    "sleep": [],
+	"cd": ["--mkdir", "--create", "--p"],
+	"cowsay": ["--animal", "--colour", "--color", "-a"],
+	"apt": ["install", "remove", "search", "--force"],
+	"head": ["--n"],
+	"tail": ["--n"],
+	"grep": ["--pattern", "--file", "-n", "-i"],
+	"find": ["--name", "--path"],
+	"json": ["--file"],
+	"wc": ["--file", "--bytes"],
+	"set": [],
+	"get": [],
+	"ls": ["--all", "--long", "--path"],
+	"echo": [],
+	"reverse": [],
+	"upper": [],
+	"pwd": [],
+	"sudo": [],
+	"sleep": [],
     "!pwsh": [],
 }
 
 import re
 import shlex
 def get_flags_for_command(cmd_name: str):
-    """
-    Return list of possible flags/params for cmd_name.
-    - Prefer explicit COMMON_FLAGS
-    - Fallback: parse command function docstring for tokens starting with --
-    """
-    out = []
-    if not cmd_name:
-        return out
-    if cmd_name in COMMON_FLAGS:
-        out.extend(COMMON_FLAGS[cmd_name])
-    # parse docstring for --flags
-    try:
-        func = getattr(commands_module, "COMMANDS", {}).get(cmd_name)
-        if func and getattr(func, "__doc__", None):
-            doc = func.__doc__ or ""
-            found = re.findall(r'(--[A-Za-z0-9_\-:]+)', doc)
-            for f in found:
-                if f not in out:
-                    out.append(f)
-    except Exception:
-        pass
-    # also include generic flags seen across commands
-    generic = ["--file", "--n", "--path", "--pattern", "--recursive", "--help", "--str", "--url"]
-    for g in generic:
-        if g not in out:
-            out.append(g)
-    return out
+	"""
+	Return list of possible flags/params for cmd_name.
+	- Prefer explicit COMMON_FLAGS
+	- Fallback: parse command function docstring for tokens starting with --
+	"""
+	out = []
+	if not cmd_name:
+		return out
+	if cmd_name in COMMON_FLAGS:
+		out.extend(COMMON_FLAGS[cmd_name])
+	# parse docstring for --flags
+	try:
+		func = getattr(commands_module, "COMMANDS", {}).get(cmd_name)
+		if func and getattr(func, "__doc__", None):
+			doc = func.__doc__ or ""
+			found = re.findall(r'(--[A-Za-z0-9_\-:]+)', doc)
+			for f in found:
+				if f not in out:
+					out.append(f)
+	except Exception:
+		pass
+	# also include generic flags seen across commands
+	generic = ["--file", "--n", "--path", "--pattern", "--recursive", "--help", "--str", "--url"]
+	for g in generic:
+		if g not in out:
+			out.append(g)
+	return out
 
 # Only initialize line-editing/completion if not running a script
 if not SCRIPT_PATH:
