@@ -6,3 +6,4 @@ installer.nsi
 LUW-Shell-Setup.exe
 update.nsi
 update.exe
+PythonInstaller.exe
