@@ -20,9 +20,30 @@ import shlex
 from . import colors as colors_mod
 import html  # NEW: for unescaping HTML entities in fetched web content
 
+
+def useHelper(helper):
+    exe_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "helpers",
+        helper
+    )
+
+    result = subprocess.run(
+        [exe_path],
+        capture_output=True,
+        text=True,
+        check=True,
+        encoding="utf-8",
+        errors="replace"
+    )
+
+    return result.stdout
+
+
 def pwd(args: dict) -> str:
     """Gibt das aktuelle Arbeitsverzeichnis zurück."""
     return os.getcwd()
+
 
 def cd(args: dict) -> str:
     """Wechselt das Arbeitsverzeichnis. Unterstützt --mkdir/--create/--p zum Anlegen fehlender Verzeichnisse."""
@@ -42,7 +63,8 @@ def cd(args: dict) -> str:
             return f"cd failed: {e}"
 
     # make absolute, relative paths resolved against current working dir
-    abs_path = path if os.path.isabs(path) else os.path.abspath(os.path.join(os.getcwd(), path))
+    abs_path = path if os.path.isabs(path) else os.path.abspath(
+        os.path.join(os.getcwd(), path))
     abs_path = os.path.normpath(abs_path)
 
     # check for mkdir/create flags (accept "1","true","yes")
@@ -51,7 +73,8 @@ def cd(args: dict) -> str:
             return False
         return str(v).strip().lower() in ("1", "true", "yes", "on")
 
-    want_mkdir = _truthy(args.get("mkdir")) or _truthy(args.get("create")) or _truthy(args.get("p"))
+    want_mkdir = _truthy(args.get("mkdir")) or _truthy(
+        args.get("create")) or _truthy(args.get("p"))
 
     if not os.path.exists(abs_path):
         if want_mkdir:
@@ -68,13 +91,16 @@ def cd(args: dict) -> str:
     except Exception as e:
         return f"cd failed: {e}"
 
+
 def whoami(args: dict) -> str:
     """Gibt den aktuellen Benutzer zurück."""
     return os.getlogin()
 
+
 def sysinfo(args: dict) -> str:
     """Systeminformationen anzeigen."""
     return f"{platform.system()} {platform.release()} ({platform.version()})"
+
 
 def disk_usage(args: dict) -> str:
     """Zeigt freien und belegten Speicherplatz an."""
@@ -85,11 +111,13 @@ def disk_usage(args: dict) -> str:
     except Exception as e:
         return f"disk_usage failed: {e}"
 
+
 def rand(args: dict) -> str:
     """Zufallszahl generieren."""
     start = int(args.get("start", 0))
     end = int(args.get("end", 100))
     return str(random.randint(start, end))
+
 
 def grep(args: dict) -> str:
     """Einfache Textsuche in einer Datei."""
@@ -107,41 +135,43 @@ def grep(args: dict) -> str:
 
 
 def reverse(args: dict) -> str:
-	"""
-	Reverse text. Supports:
-	- positional text: reverse Hello -> OLLEH
-	- --file <path>: reverse contents of file
-	- --url <url>: fetch URL (first 64KB) and reverse body text
-	"""
-	# file takes precedence, then url, then positional str
-	file_path = args.get("file") or args.get("f")
-	if file_path:
-		try:
-			with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-				text = f.read()
-		except Exception as e:
-			return f"reverse failed reading file: {e}"
-	else:
-		url = args.get("url") or args.get("u")
-		if url:
-			try:
-				with urllib.request.urlopen(url, timeout=10) as resp:
-					data = resp.read(1024 * 64)
-					text = data.decode(errors="replace")
-			except Exception as e:
-				return f"reverse failed fetching url: {e}"
-		else:
-			text = args.get("str", "") or ""
+    """
+    Reverse text. Supports:
+    - positional text: reverse Hello -> OLLEH
+    - --file <path>: reverse contents of file
+    - --url <url>: fetch URL (first 64KB) and reverse body text
+    """
+    # file takes precedence, then url, then positional str
+    file_path = args.get("file") or args.get("f")
+    if file_path:
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                text = f.read()
+        except Exception as e:
+            return f"reverse failed reading file: {e}"
+    else:
+        url = args.get("url") or args.get("u")
+        if url:
+            try:
+                with urllib.request.urlopen(url, timeout=10) as resp:
+                    data = resp.read(1024 * 64)
+                    text = data.decode(errors="replace")
+            except Exception as e:
+                return f"reverse failed fetching url: {e}"
+        else:
+            text = args.get("str", "") or ""
 
-	# ensure string and perform reverse
-	try:
-		return str(text)[::-1]
-	except Exception as e:
-		return f"reverse failed: {e}"
+    # ensure string and perform reverse
+    try:
+        return str(text)[::-1]
+    except Exception as e:
+        return f"reverse failed: {e}"
+
 
 def upper(args: dict) -> str:
     text = args.get("str", "")
     return text.upper()
+
 
 # safe calculator that only allows numeric arithmetic
 _allowed_ops = {
@@ -152,13 +182,15 @@ _allowed_ops = {
     ast.Mod: operator.mod,
     ast.Pow: operator.pow,
     ast.FloorDiv: operator.floordiv,
-    ast.BitXor: operator.pow,  # Treat ^ as exponentiation (common calculator expectation)
+    # Treat ^ as exponentiation (common calculator expectation)
+    ast.BitXor: operator.pow,
 }
 
 _unary_ops = {
     ast.UAdd: operator.pos,
     ast.USub: operator.neg,
 }
+
 
 def _eval_node(node):
     if isinstance(node, ast.BinOp):
@@ -187,6 +219,7 @@ def _eval_node(node):
         return node.n
     raise ValueError("unsupported expression element")
 
+
 def calculator(args: dict) -> str:
     exe_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
@@ -206,23 +239,29 @@ def calculator(args: dict) -> str:
     return result.stdout
 
 
-
-def datetime_now(args:dict) -> str:
+def datetime_now(args: dict) -> str:
     # return an ISO-formatted string instead of a datetime object
-    return datetime.datetime.now().isoformat()
+    return useHelper("time.exe")
 
-_env_pattern = re.compile(r'\$env:([A-Za-z_]\w*)|\${([A-Za-z_]\w*)}|\$([A-Za-z_]\w*)')
+
+_env_pattern = re.compile(
+    r'\$env:([A-Za-z_]\w*)|\${([A-Za-z_]\w*)}|\$([A-Za-z_]\w*)')
+
+
 def _expand_env(s: str) -> str:
     if not s:
         return s
+
     def repl(m):
         name = m.group(1) or m.group(2) or m.group(3)
         return os.environ.get(name, "")
     return _env_pattern.sub(repl, s)
 
+
 def echo(args: dict) -> str:
     # expand environment variables inside the string
     return _expand_env(args.get("str", ""))
+
 
 def ls(args: dict) -> str:
     path = _expand_env(args.get("str", "")) or args.get("path", ".")
@@ -231,6 +270,7 @@ def ls(args: dict) -> str:
         return "\n".join(entries)
     except Exception as e:
         return f"ls failed: {e}"
+
 
 def cat(args: dict) -> str:
     path = args.get("str", "")
@@ -244,6 +284,7 @@ def cat(args: dict) -> str:
         except Exception as e:
             out.append(f"cat failed ({p}): {e}")
     return "\n".join(out)
+
 
 def head(args: dict) -> str:
     path = args.get("str", "")
@@ -261,6 +302,7 @@ def head(args: dict) -> str:
         return "\n".join(lines)
     except Exception as e:
         return f"head failed: {e}"
+
 
 def tail(args: dict) -> str:
     path = args.get("str", "")
@@ -287,6 +329,7 @@ def tail(args: dict) -> str:
     except Exception as e:
         return f"tail failed: {e}"
 
+
 def cp(args: dict) -> str:
     src = args.get("src") or args.get("str", "")
     dst = args.get("dst") or args.get("to")
@@ -297,6 +340,7 @@ def cp(args: dict) -> str:
         return ""
     except Exception as e:
         return f"cp failed: {e}"
+
 
 def mv(args: dict) -> str:
     src = args.get("src") or args.get("str", "")
@@ -309,9 +353,11 @@ def mv(args: dict) -> str:
     except Exception as e:
         return f"mv failed: {e}"
 
+
 def rm(args: dict) -> str:
     path = args.get("str", "") or args.get("path", "")
-    recursive = str(args.get("r", args.get("recursive", ""))).strip().lower() in ("1", "true", "yes", "on")
+    recursive = str(args.get("r", args.get("recursive", ""))
+                    ).strip().lower() in ("1", "true", "yes", "on")
     if not path:
         return "usage: rm <path> [--r 1]"
     try:
@@ -323,6 +369,7 @@ def rm(args: dict) -> str:
     except Exception as e:
         return f"rm failed: {e}"
 
+
 def mkdir_cmd(args: dict) -> str:
     path = args.get("str", "") or args.get("path", "")
     if not path:
@@ -332,6 +379,7 @@ def mkdir_cmd(args: dict) -> str:
         return ""
     except Exception as e:
         return f"mkdir failed: {e}"
+
 
 def touch(args: dict) -> str:
     path = args.get("str", "") or args.get("path", "")
@@ -344,6 +392,7 @@ def touch(args: dict) -> str:
     except Exception as e:
         return f"touch failed: {e}"
 
+
 def file_info(args: dict) -> str:
     path = args.get("str", "") or args.get("path", "")
     if not path:
@@ -354,6 +403,7 @@ def file_info(args: dict) -> str:
         return f"{path}\nsize={st.st_size} bytes\nmode={mode}\nmtime={datetime.datetime.fromtimestamp(st.st_mtime).isoformat()}"
     except Exception as e:
         return f"stat failed: {e}"
+
 
 def wc(args: dict) -> str:
     path = args.get("str", "") or args.get("path", "")
@@ -368,6 +418,7 @@ def wc(args: dict) -> str:
         return f"{lines} {words} {bytes_len} {path}"
     except Exception as e:
         return f"wc failed: {e}"
+
 
 def json_pretty(args: dict) -> str:
     s = args.get("str", "") or ""
@@ -387,6 +438,7 @@ def json_pretty(args: dict) -> str:
     except Exception as e:
         return f"json failed: {e}"
 
+
 def http_get(args: dict) -> str:
     url = args.get("str", "") or args.get("url", "")
     if not url:
@@ -401,6 +453,7 @@ def http_get(args: dict) -> str:
     except Exception as e:
         return f"http_get failed: {e}"
 
+
 def b64_encode(args: dict) -> str:
     s = args.get("str", "") or ""
     if not s:
@@ -410,6 +463,7 @@ def b64_encode(args: dict) -> str:
     except Exception as e:
         return f"b64_encode failed: {e}"
 
+
 def b64_decode(args: dict) -> str:
     s = args.get("str", "") or ""
     if not s:
@@ -418,6 +472,7 @@ def b64_decode(args: dict) -> str:
         return base64.b64decode(s.encode("ascii"), validate=False).decode("utf-8", errors="replace")
     except Exception as e:
         return f"b64_decode failed: {e}"
+
 
 def find(args: dict) -> str:
     path = args.get("str", "") or args.get("path", ".")
@@ -435,6 +490,8 @@ def find(args: dict) -> str:
         return f"find failed: {e}"
 
 # Add fallback text wrap + ascii animals (used when cowsay package not present or returns None)
+
+
 def _wrap_text(msg: str, width: int = 40):
     words = msg.split()
     if not words:
@@ -449,6 +506,7 @@ def _wrap_text(msg: str, width: int = 40):
             cur = w
     lines.append(cur)
     return lines
+
 
 _ANIMALS = {
     "cow": r"""
@@ -489,7 +547,8 @@ _ANIMALS = {
 # --- NEW: load .cow files from project 'cows' directory and register by filename (kitty.cow -> --animal kitty)
 _COW_TEMPLATES = {}
 try:
-    _PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))  # parent of modules/
+    _PROJECT_ROOT = os.path.dirname(
+        os.path.dirname(__file__))  # parent of modules/
     _COW_DIR = os.path.join(_PROJECT_ROOT, "cows")
     if os.path.isdir(_COW_DIR):
         for _fn in sorted(os.listdir(_COW_DIR)):
@@ -520,6 +579,7 @@ _COLOR_MAP = {
     "bright_cyan": "\033[96m", "bright_white": "\033[97m",
 }
 
+
 def _build_fallback_cowsay(msg: str, animal: str):
     lines = _wrap_text(msg, width=40)
     maxlen = max(len(l) for l in lines)
@@ -536,6 +596,7 @@ def _build_fallback_cowsay(msg: str, animal: str):
 
     art = _ANIMALS.get(animal, _ANIMALS["cow"])
     return bubble + "\n" + art
+
 
 def cowsay(args: dict) -> str:
     """
@@ -636,7 +697,8 @@ def cowsay(args: dict) -> str:
                 if callable(func):
                     with contextlib.redirect_stdout(buf):
                         ret = func(msg)
-                    out = ret if isinstance(ret, str) and ret else buf.getvalue()
+                    out = ret if isinstance(
+                        ret, str) and ret else buf.getvalue()
                     art = out if out else None
                 else:
                     with contextlib.redirect_stdout(buf):
@@ -644,7 +706,8 @@ def cowsay(args: dict) -> str:
                             ret = _cowsay_mod.cowsay(msg, cow=animal)
                         except TypeError:
                             ret = _cowsay_mod.cowsay(msg)
-                    out = ret if isinstance(ret, str) and ret else buf.getvalue()
+                    out = ret if isinstance(
+                        ret, str) and ret else buf.getvalue()
                     art = out if out else None
         except Exception:
             art = None
@@ -666,7 +729,8 @@ def cowsay(args: dict) -> str:
                 mid_lines = [f"| {l.ljust(maxlen)} |" for l in lines]
                 bubble = "\n".join([top] + mid_lines + [bottom])
             # Try to render the .cow template nicely
-            rendered_cow = _render_dot_cow(cowfile_content, msg, eyes=None, tongue=None)
+            rendered_cow = _render_dot_cow(
+                cowfile_content, msg, eyes=None, tongue=None)
             if rendered_cow:
                 art = bubble + "\n" + rendered_cow
             else:
@@ -676,7 +740,8 @@ def cowsay(args: dict) -> str:
             art = _build_fallback_cowsay(msg, animal)
 
     color_prefix = ""
-    color_suffix = colors_mod.RESET if hasattr(colors_mod, "RESET") else "\033[0m"
+    color_suffix = colors_mod.RESET if hasattr(
+        colors_mod, "RESET") else "\033[0m"
 
     if rgb_tuple and len(rgb_tuple) == 3:
         r, g, b = rgb_tuple
@@ -692,9 +757,11 @@ def cowsay(args: dict) -> str:
             color_prefix = getattr(colors_mod, "LIGHT_GREEN", "")
 
     if color_prefix:
-        colored = "\n".join(f"{color_prefix}{line}{color_suffix}" for line in str(art).splitlines())
+        colored = "\n".join(
+            f"{color_prefix}{line}{color_suffix}" for line in str(art).splitlines())
         return colored
     return str(art)
+
 
 def _detect_linux_distro():
     """Return distro id (lowercased) and pretty name if available, else (None, None)."""
@@ -712,6 +779,7 @@ def _detect_linux_distro():
         return distro_id, name
     except Exception:
         return None, None
+
 
 # Logos (small, single-character/shape recognizable)
 _LOGOS = {
@@ -746,6 +814,7 @@ _LOGOS = {
     ],
 }
 
+
 def os_type(args: dict) -> str:
     """
     os-type
@@ -759,7 +828,8 @@ def os_type(args: dict) -> str:
     distro_id = None
     pretty_name = ""
     if system.lower() == "linux":
-        distro_id, pretty_name = _detect_linux_distro()  # e.g. 'ubuntu', 'chromium', etc.
+        # e.g. 'ubuntu', 'chromium', etc.
+        distro_id, pretty_name = _detect_linux_distro()
 
     # choose logo key
     key = None
@@ -840,217 +910,242 @@ def os_type(args: dict) -> str:
 
 # --- new command implementations (insert near other command defs) ---
 
+
 def date(args: dict) -> str:
-	"""Print the current date/time."""
-	return datetime.datetime.now().isoformat(sep=" ")
+    """Print the current date/time."""
+    return datetime.datetime.now().isoformat(sep=" ")
+
 
 def uname(args: dict) -> str:
-	"""Show system information (like uname -a)."""
-	u = platform.uname()
-	return " ".join([u.system, u.node, u.release, u.version, u.machine, u.processor or ""])
+    """Show system information (like uname -a)."""
+    u = platform.uname()
+    return " ".join([u.system, u.node, u.release, u.version, u.machine, u.processor or ""])
+
 
 def hostname(args: dict) -> str:
-	"""Return hostname."""
-	try:
-		return platform.node() or os.uname().nodename
-	except Exception:
-		return os.environ.get("HOSTNAME", "") or os.environ.get("COMPUTERNAME", "")
+    """Return hostname."""
+    try:
+        return platform.node() or os.uname().nodename
+    except Exception:
+        return os.environ.get("HOSTNAME", "") or os.environ.get("COMPUTERNAME", "")
+
 
 def uptime(args: dict) -> str:
-	"""Approximate uptime (Linux via /proc/uptime, fallback N/A)."""
-	try:
-		if os.path.exists("/proc/uptime"):
-			with open("/proc/uptime", "r") as f:
-				secs = float(f.readline().split()[0])
-			m, s = divmod(int(secs), 60)
-			h, m = divmod(m, 60)
-			d, h = divmod(h, 24)
-			return f"{d}d {h}h {m}m {s}s"
-		# Windows fallback: use system boot time via performance counters if available
-		return "uptime not available"
-	except Exception:
-		return "uptime not available"
+    """Approximate uptime (Linux via /proc/uptime, fallback N/A)."""
+    try:
+        if os.path.exists("/proc/uptime"):
+            with open("/proc/uptime", "r") as f:
+                secs = float(f.readline().split()[0])
+            m, s = divmod(int(secs), 60)
+            h, m = divmod(m, 60)
+            d, h = divmod(h, 24)
+            return f"{d}d {h}h {m}m {s}s"
+        # Windows fallback: use system boot time via performance counters if available
+        return "uptime not available"
+    except Exception:
+        return "uptime not available"
+
 
 def whoami_cmd(args: dict) -> str:
-	"""Return current username."""
-	try:
-		return os.getlogin()
-	except Exception:
-		return os.environ.get("USERNAME") or os.environ.get("USER") or ""
+    """Return current username."""
+    try:
+        return os.getlogin()
+    except Exception:
+        return os.environ.get("USERNAME") or os.environ.get("USER") or ""
+
 
 def sleep(args: dict) -> str:
-	"""Sleep N seconds (blocking)."""
-	try:
-		n = float(args.get("str", "1"))
-	except Exception:
-		n = 1.0
-	time.sleep(max(0.0, n))
-	return ""
+    """Sleep N seconds (blocking)."""
+    try:
+        n = float(args.get("str", "1"))
+    except Exception:
+        n = 1.0
+    time.sleep(max(0.0, n))
+    return ""
+
 
 def basename(args: dict) -> str:
-	"""Return basename of path."""
-	return os.path.basename(args.get("str", "") or "")
+    """Return basename of path."""
+    return os.path.basename(args.get("str", "") or "")
+
 
 def dirname(args: dict) -> str:
-	"""Return dirname of path."""
-	return os.path.dirname(args.get("str", "") or "")
+    """Return dirname of path."""
+    return os.path.dirname(args.get("str", "") or "")
+
 
 def which(args: dict) -> str:
-	"""Return full path of executable (shutil.which)."""
-	name = args.get("str", "")
-	if not name:
-		return ""
-	path = shutil.which(name)
-	return path or ""
+    """Return full path of executable (shutil.which)."""
+    name = args.get("str", "")
+    if not name:
+        return ""
+    path = shutil.which(name)
+    return path or ""
+
 
 def true_cmd(args: dict) -> str:
-	"""Do nothing, succeed."""
-	return ""
+    """Do nothing, succeed."""
+    return ""
+
 
 def false_cmd(args: dict) -> str:
-	"""Always 'fail' — but do not exit shell. Return non-empty string to indicate false."""
-	return "false"
+    """Always 'fail' — but do not exit shell. Return non-empty string to indicate false."""
+    return "false"
+
 
 def yes(args: dict) -> str:
-	"""Repeat a string (default 'y') many times (limited)."""
-	s = args.get("str", "y")
-	count = int(args.get("n", 100))
-	return "\n".join([s] * max(0, min(10000, count)))
+    """Repeat a string (default 'y') many times (limited)."""
+    s = args.get("str", "y")
+    count = int(args.get("n", 100))
+    return "\n".join([s] * max(0, min(10000, count)))
+
 
 def sort_cmd(args: dict) -> str:
-	"""Sort lines from input or a file."""
-	txt = args.get("str", "")
-	if args.get("file"):
-		try:
-			with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
-				txt = f.read()
-		except Exception as e:
-			return f"sort failed: {e}"
-	lines = txt.splitlines()
-	return "\n".join(sorted(lines))
+    """Sort lines from input or a file."""
+    txt = args.get("str", "")
+    if args.get("file"):
+        try:
+            with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
+                txt = f.read()
+        except Exception as e:
+            return f"sort failed: {e}"
+    lines = txt.splitlines()
+    return "\n".join(sorted(lines))
+
 
 def uniq(args: dict) -> str:
-	"""uniq: remove consecutive duplicate lines by default; --all removes all duplicates."""
-	txt = args.get("str", "")
-	all_dup = str(args.get("all", "")).strip().lower() in ("1", "true", "yes")
-	lines = txt.splitlines()
-	if all_dup:
-		seen = set()
-		out = []
-		for l in lines:
-			if l not in seen:
-				seen.add(l)
-				out.append(l)
-		return "\n".join(out)
-	# consecutive unique
-	out = []
-	prev = None
-	for l in lines:
-		if l != prev:
-			out.append(l)
-		prev = l
-	return "\n".join(out)
+    """uniq: remove consecutive duplicate lines by default; --all removes all duplicates."""
+    txt = args.get("str", "")
+    all_dup = str(args.get("all", "")).strip().lower() in ("1", "true", "yes")
+    lines = txt.splitlines()
+    if all_dup:
+        seen = set()
+        out = []
+        for l in lines:
+            if l not in seen:
+                seen.add(l)
+                out.append(l)
+        return "\n".join(out)
+    # consecutive unique
+    out = []
+    prev = None
+    for l in lines:
+        if l != prev:
+            out.append(l)
+        prev = l
+    return "\n".join(out)
+
 
 def head_cmd(args: dict) -> str:
-	"""Head: first N lines from text or file."""
-	n = int(args.get("n", 10))
-	txt = args.get("str", "")
-	if args.get("file"):
-		try:
-			with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
-				return "\n".join([next(f).rstrip("\n") for _ in range(n) if not f.closed])
-		except StopIteration:
-			return ""
-		except Exception as e:
-			return f"head failed: {e}"
-	lines = txt.splitlines()
-	return "\n".join(lines[:n])
+    """Head: first N lines from text or file."""
+    n = int(args.get("n", 10))
+    txt = args.get("str", "")
+    if args.get("file"):
+        try:
+            with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
+                return "\n".join([next(f).rstrip("\n") for _ in range(n) if not f.closed])
+        except StopIteration:
+            return ""
+        except Exception as e:
+            return f"head failed: {e}"
+    lines = txt.splitlines()
+    return "\n".join(lines[:n])
+
 
 def tail_cmd(args: dict) -> str:
-	"""Tail: last N lines from text or file."""
-	n = int(args.get("n", 10))
-	txt = args.get("str", "")
-	if args.get("file"):
-		try:
-			with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
-				lines = f.read().splitlines()
-			return "\n".join(lines[-n:])
-		except Exception as e:
-			return f"tail failed: {e}"
-	lines = txt.splitlines()
-	return "\n".join(lines[-n:])
+    """Tail: last N lines from text or file."""
+    n = int(args.get("n", 10))
+    txt = args.get("str", "")
+    if args.get("file"):
+        try:
+            with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
+                lines = f.read().splitlines()
+            return "\n".join(lines[-n:])
+        except Exception as e:
+            return f"tail failed: {e}"
+    lines = txt.splitlines()
+    return "\n".join(lines[-n:])
+
 
 def wc_cmd(args: dict) -> str:
-	"""wc: count lines, words, bytes for given text or file."""
-	txt = args.get("str", "")
-	if args.get("file"):
-		try:
-			with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
-				txt = f.read()
-		except Exception as e:
-			return f"wc failed: {e}"
-	lines = txt.count("\n")
-	words = len(txt.split())
-	bytes_len = len(txt.encode("utf-8"))
-	return f"{lines} {words} {bytes_len}"
+    """wc: count lines, words, bytes for given text or file."""
+    txt = args.get("str", "")
+    if args.get("file"):
+        try:
+            with open(args["file"], "r", encoding="utf-8", errors="replace") as f:
+                txt = f.read()
+        except Exception as e:
+            return f"wc failed: {e}"
+    lines = txt.count("\n")
+    words = len(txt.split())
+    bytes_len = len(txt.encode("utf-8"))
+    return f"{lines} {words} {bytes_len}"
+
 
 def clear(args: dict) -> str:
-	"""Clear terminal screen."""
-	try:
-		os.system("cls" if os.name == "nt" else "clear")
-		return ""
-	except Exception:
-		return ""
+    """Clear terminal screen."""
+    try:
+        os.system("cls" if os.name == "nt" else "clear")
+        return ""
+    except Exception:
+        return ""
+
 
 def apt(args: dict) -> str:
-	"""
-	Simple apt wrapper: `apt install <ModuleName>` installs a PowerShell module via pwsh.
-	"""
-	raw = args.get("str", "") or ""
-	parts = shlex.split(raw)
-	if not parts or parts[0] != "install" or len(parts) < 2:
-		return "usage: apt install <PowerShellModule>"
-	pkg = parts[1]
-	try:
-		# Prefer pwsh if present
-		exe = shutil.which("pwsh") or shutil.which("powershell")
-		if not exe:
-			return "pwsh/powershell not found"
-		cmd = [exe, "-NoProfile", "-Command", f"Install-Module -Name {pkg} -Force -Scope CurrentUser"]
-		# force UTF-8 decoding and replace invalid bytes
-		proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
-		if proc.returncode == 0:
-			return f"Installed {pkg}"
-		return proc.stderr or proc.stdout or f"apt failed (code {proc.returncode})"
-	except Exception as e:
-		return f"apt failed: {e}"
+    """
+    Simple apt wrapper: `apt install <ModuleName>` installs a PowerShell module via pwsh.
+    """
+    raw = args.get("str", "") or ""
+    parts = shlex.split(raw)
+    if not parts or parts[0] != "install" or len(parts) < 2:
+        return "usage: apt install <PowerShellModule>"
+    pkg = parts[1]
+    try:
+        # Prefer pwsh if present
+        exe = shutil.which("pwsh") or shutil.which("powershell")
+        if not exe:
+            return "pwsh/powershell not found"
+        cmd = [exe, "-NoProfile", "-Command",
+               f"Install-Module -Name {pkg} -Force -Scope CurrentUser"]
+        # force UTF-8 decoding and replace invalid bytes
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=300)
+        if proc.returncode == 0:
+            return f"Installed {pkg}"
+        return proc.stderr or proc.stdout or f"apt failed (code {proc.returncode})"
+    except Exception as e:
+        return f"apt failed: {e}"
+
 
 def sudo(args: dict) -> str:
-	"""
-	Run command elevated. On Windows attempt Start-Process -Verb RunAs (pwsh/powershell).
-	On Unix use sudo.
-	"""
-	cmdline = args.get("str", "")
-	if not cmdline:
-		return "usage: sudo <command>"
-	try:
-		if os.name == "nt":
-			exe = shutil.which("powershell") or shutil.which("pwsh")
-			if not exe:
-				return "powershell/pwsh not found for elevation"
-			# build PowerShell Start-Process invocation
-			ps_cmd = f'Start-Process {exe} -ArgumentList \'-NoProfile -Command "{cmdline}"\' -Verb RunAs'
-			# run without capturing output (elevation UI) but protect decoding if any output collected
-			subprocess.run([shutil.which("powershell") or "powershell", "-NoProfile", "-Command", ps_cmd], check=True, encoding="utf-8", errors="replace")
-			return ""
-		else:
-			# Unix: run via sudo; capture output with utf-8 decode to avoid readerthread decode errors
-			proc = subprocess.run(["sudo"] + shlex.split(cmdline), capture_output=True, text=True, encoding="utf-8", errors="replace")
-			if proc.returncode == 0:
-				return proc.stdout.strip() or ""
-			return proc.stderr or proc.stdout or f"sudo failed (code {proc.returncode})"
-	except Exception as e:
-		return f"sudo failed: {e}"
+    """
+    Run command elevated. On Windows attempt Start-Process -Verb RunAs (pwsh/powershell).
+    On Unix use sudo.
+    """
+    cmdline = args.get("str", "")
+    if not cmdline:
+        return "usage: sudo <command>"
+    try:
+        if os.name == "nt":
+            exe = shutil.which("powershell") or shutil.which("pwsh")
+            if not exe:
+                return "powershell/pwsh not found for elevation"
+            # build PowerShell Start-Process invocation
+            ps_cmd = f'Start-Process {exe} -ArgumentList \'-NoProfile -Command "{cmdline}"\' -Verb RunAs'
+            # run without capturing output (elevation UI) but protect decoding if any output collected
+            subprocess.run([shutil.which("powershell") or "powershell", "-NoProfile",
+                           "-Command", ps_cmd], check=True, encoding="utf-8", errors="replace")
+            return ""
+        else:
+            # Unix: run via sudo; capture output with utf-8 decode to avoid readerthread decode errors
+            proc = subprocess.run(["sudo"] + shlex.split(cmdline),
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
+            if proc.returncode == 0:
+                return proc.stdout.strip() or ""
+            return proc.stderr or proc.stdout or f"sudo failed (code {proc.returncode})"
+    except Exception as e:
+        return f"sudo failed: {e}"
+
 
 def lupdate(args: dict) -> str:
     # Pfad zur Konfigurationsdatei im User-Home
@@ -1066,6 +1161,7 @@ def lupdate(args: dict) -> str:
     return "Launched Update process. A new window should open."
 
 # --- end new command implementations ---
+
 
 COMMANDS = {
     "reverse": reverse,
@@ -1127,6 +1223,7 @@ COMMANDS.update({
     # ...add more as needed...
 })
 
+
 def _parse_dot_cow(content: str):
     """
     Parse a .cow file content and return (template, defaults) or (None, None) on failure.
@@ -1139,21 +1236,25 @@ def _parse_dot_cow(content: str):
         non_comment = [l for l in lines if not l.strip().startswith("#")]
         content_nc = "\n".join(non_comment)
         # find here-doc block assigned to $the_cow
-        m = re.search(r"\$the_cow\s*=\s*<<['\"]?EOC['\"]?;\s*(.*?)\nEOC", content_nc, re.DOTALL | re.M)
+        m = re.search(
+            r"\$the_cow\s*=\s*<<['\"]?EOC['\"]?;\s*(.*?)\nEOC", content_nc, re.DOTALL | re.M)
         if not m:
             return None, {}
         template = m.group(1).rstrip("\n")
         defaults = {}
         # find default eyes/tongue patterns like: $eyes = $eyes || "o.o";
-        m_eyes = re.search(r"\$eyes\s*=\s*\$eyes\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
+        m_eyes = re.search(
+            r"\$eyes\s*=\s*\$eyes\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
         if m_eyes:
             defaults["eyes"] = m_eyes.group(1)
-        m_tongue = re.search(r"\$tongue\s*=\s*\$tongue\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
+        m_tongue = re.search(
+            r"\$tongue\s*=\s*\$tongue\s*\|\|\s*['\"]([^'\"]+)['\"]", content_nc)
         if m_tongue:
             defaults["tongue"] = m_tongue.group(1)
         return template, defaults
     except Exception:
         return None, {}
+
 
 def _render_dot_cow(content: str, msg: str, eyes: str = None, tongue: str = None):
     """
@@ -1170,7 +1271,8 @@ def _render_dot_cow(content: str, msg: str, eyes: str = None, tongue: str = None
     thoughts_val = " "  # single space used where $thoughts appears in templates
     # substitute placeholders (simple literal replacement)
     try:
-        out = tpl.replace("$thoughts", thoughts_val).replace("$eyes", eyes_val).replace("$tongue", tongue_val)
+        out = tpl.replace("$thoughts", thoughts_val).replace(
+            "$eyes", eyes_val).replace("$tongue", tongue_val)
         # Strip any leading/trailing empty lines from template output
         return "\n".join(line.rstrip() for line in out.splitlines()).rstrip("\n")
     except Exception:

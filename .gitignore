@@ -17,3 +17,6 @@ app.exp
 .vs
 luw-shell-scripting-syntax-extension/
 helpers/ext
+setup.py
+push.ps1
+build/
