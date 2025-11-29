@@ -187,16 +187,25 @@ def _eval_node(node):
         return node.n
     raise ValueError("unsupported expression element")
 
-def calculator(args:dict) -> str:
-    expr = str(args.get("str", "")).strip()
-    if not expr:
-        return "Fehler: kein Ausdruck angegeben"
-    try:
-        tree = ast.parse(expr, mode="eval")
-        result = _eval_node(tree.body)
-        return str(result)
-    except Exception as e:
-        return f"Fehler: {e}"
+def calculator(args: dict) -> str:
+    exe_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "helpers",
+        "calc.exe"
+    )
+
+    result = subprocess.run(
+        [exe_path, "--input", args["str"]],
+        capture_output=True,
+        text=True,
+        check=True,
+        encoding="utf-8",
+        errors="replace"
+    )
+
+    return result.stdout
+
+
 
 def datetime_now(args:dict) -> str:
     # return an ISO-formatted string instead of a datetime object

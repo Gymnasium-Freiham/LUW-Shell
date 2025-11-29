@@ -10,3 +10,10 @@ PythonInstaller.exe
 Git-2.52.0-64-bit.exe
 Add-LuwProfile.ps1
 logo.ico
+app.c
+app.lib
+app.obj
+app.exp
+.vs
+luw-shell-scripting-syntax-extension/
+helpers/ext
