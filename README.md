@@ -59,3 +59,7 @@ Start arguments
 `--thread-count` 
 
 Sets the number of workers, e. g. `--thread-count 8`
+
+VS Code Language Extension
+--------------------------------------------
+Download it here: [LUW Shell VSCode Language Extension](https://github.com/Gymnasium-Freiham/LUW-Shell-VSCode-Language-Extension)
